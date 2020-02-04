@@ -18,6 +18,8 @@ In the request to get token, we add a request header named userId which contains
 e.g a user with id 1 and name "user" is added to dummy service, if a request comes to keycloak server for token, with header userId = 1,
 the user object is added to the token.
 
+5. docker-compose down -v
+ -v to remove the volumes created by these containers
 # keycloakCustomMapper
 This contains:
 * data-setup => which uses keycloak api end points to create realm, users etc.
