@@ -1,5 +1,9 @@
 package com.tavisca;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.keycloak.models.ClientSessionContext;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.ProtocolMapperModel;
 import org.keycloak.models.UserSessionModel;
@@ -7,14 +11,13 @@ import org.keycloak.protocol.oidc.mappers.*;
 import org.keycloak.provider.ProviderConfigProperty;
 import org.keycloak.representations.IDToken;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /*
  * Our own example protocol mapper.
@@ -71,47 +74,40 @@ public class HelloWorldMapper extends AbstractOIDCProtocolMapper implements OIDC
         return PROVIDER_ID;
     }
 
+
     @Override
-    protected void setClaim(final IDToken token, final ProtocolMapperModel mappingModel, final UserSessionModel userSession, final KeycloakSession keycloakSession) {
+    protected void setClaim(final IDToken token, final ProtocolMapperModel mappingModel, final UserSessionModel userSession,
+                            final KeycloakSession keycloakSession, ClientSessionContext clientSessionCtx) {
         // adds our data to the token. Uses the parameters like the claim name which were set by the user
         // when this protocol mapper was configured in keycloak. Note that the parameters which can
         // be configured in keycloak for this protocol mapper were set in the static intializer of this class.
         //
         // Sets a static "Hello world" string, but we could write a dynamic value like a group attribute here too.
 
-        String data = "initial data";
         try {
             List<String> userId = keycloakSession.getContext().getRequestHeaders().getRequestHeader("userId");
-            data=sendGet(userId.get(0));
+            Map<String, Object> stringObjectMap = sendGet(userId.get(0));
+            stringObjectMap.forEach((k, v) -> System.out.println("**************** "+ k + "***** " + v));
+            OIDCAttributeMapperHelper.mapClaim(token, mappingModel,stringObjectMap );
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
-        OIDCAttributeMapperHelper.mapClaim(token, mappingModel, data);
     }
 
-    private String sendGet(String userId) throws IOException {
+    private Map<String, Object> sendGet(String userId) throws IOException {
         URL obj = new URL("http://service:8087/user/"+userId);
         HttpURLConnection con = (HttpURLConnection) obj.openConnection();
         con.setRequestMethod("GET");
         con.setRequestProperty("User-Agent", "Mozilla/5.0");
         int responseCode = con.getResponseCode();
         if (responseCode == HttpURLConnection.HTTP_OK) { // success
-            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-            String inputLine;
-            StringBuffer response = new StringBuffer();
-
-            while ((inputLine = in.readLine()) != null) {
-                response.append(inputLine);
-            }
-            in.close();
-
-            return response.toString();
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readValue(con.getInputStream(),
+                    new TypeReference<Map<String, Object>>(){});
         }
-        return "no data";
+        return null;
     }
 
 

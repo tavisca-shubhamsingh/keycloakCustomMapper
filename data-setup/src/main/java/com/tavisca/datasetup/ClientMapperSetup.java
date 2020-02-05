@@ -46,8 +46,9 @@ public class ClientMapperSetup {
         protocolMapperRepresentation.setProtocol(PROTOCOL);
         protocolMapperRepresentation.setName("Hello world mapper");
         Map<String, String> config = new HashMap<>();
+        config.put("multivalued","true");
         putAccessTokenClaim(config);
-        config.put(OIDCAttributeMapperHelper.TOKEN_CLAIM_NAME, "example.message");
+        config.put(OIDCAttributeMapperHelper.TOKEN_CLAIM_NAME, "user_details");
         protocolMapperRepresentation.setConfig(config);
         return protocolMapperRepresentation;
     }

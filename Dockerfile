@@ -1,4 +1,4 @@
-FROM jboss/keycloak:4.5.0.Final
+FROM jboss/keycloak:5.0.0
 
 # Add own mapper to keycloak
 # Idea is based on https://github.com/arielcarrera/keycloak-docker-oracle
